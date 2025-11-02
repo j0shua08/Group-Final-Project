@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="css/styles.css">
+  <script defer src="js/app.js"></script>
+  <title>Listings</title>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="listings.html">Listings</a>
+    <a href="cart.html">Cart</a>
+  </nav>
+
+  <div class="container">
+    <h2>Product Listings</h2>
+
+    <div class="grid">
+      <div class="card">
+        <img src="assets/img-placeholder.png" width="100%">
+        <h3>Product 1</h3>
+        <p>₱500</p>
+        <button class="btn" onclick="addToCart({name:'Product 1',price:500})">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <img src="assets/img-placeholder.png" width="100%">
+        <h3>Product 2</h3>
+        <p>₱750</p>
+        <button class="btn" onclick="addToCart({name:'Product 2',price:750})">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
