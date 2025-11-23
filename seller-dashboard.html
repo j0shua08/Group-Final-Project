@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Seller Dashboard • UniThrift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: #f3f4f6;
+        margin: 0;
+        padding: 24px 16px 40px;
+      }
+      .shell {
+        max-width: 1040px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 0 0 4px;
+      }
+      .muted {
+        color: #6b7280;
+        margin: 0 0 16px;
+        font-size: 0.9rem;
+      }
+      .top-links {
+        margin-bottom: 12px;
+        font-size: 0.85rem;
+      }
+      .top-links a {
+        color: #4f46e5;
+        text-decoration: none;
+        margin-right: 12px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      @media (max-width: 800px) {
+        .row {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 16px 16px 18px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e5e7eb;
+      }
+      .card h2 {
+        margin: 0 0 6px;
+        font-size: 1.05rem;
+      }
+      label {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #374151;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 7px 9px;
+        margin-top: 3px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        font-size: 0.85rem;
+        outline: none;
+        resize: vertical;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.1);
+      }
+      button {
+        margin-top: 12px;
+        padding: 8px 13px;
+        border-radius: 999px;
+        border: none;
+        background: #111827;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.85rem;
+      }
+      button.small {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+      }
+      button.danger {
+        background: #b91c1c;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+      .message {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        padding: 6px 8px;
+        border-radius: 8px;
+        display: none;
+      }
+      .message.error {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .message.ok {
+        background: #dcfce7;
+        color: #166534;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.83rem;
+      }
+      th,
+      td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+      }
+      th {
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        color: #6b7280;
+      }
+      .small {
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 0.7rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-links">
+        <a href="index.html">Home</a>
+        <a href="listings.html">Shop</a>
+        <a href="cart.html">Cart</a>
+        <a href="my-orders.html">My Orders</a>
+        <a href="seller-dashboard.html">Sell</a>
+        <a href="login.html" id="logoutLink">Log out</a>
+      </div>
+
+      <h1>Seller Dashboard</h1>
+      <p class="muted">
+        Manage your UniThrift listings and see who placed orders for your
+        items.
+      </p>
+
+      <div class="row">
+        <div class="card">
+          <h2>Add a new listing</h2>
+          <label for="name">Item name</label>
+          <input id="name" type="text" placeholder="e.g. A4 bond paper" />
+
+          <label for="price">Price (₱)</label>
+          <input id="price" type="number" min="0" step="1" />
+
+          <label for="imageUrl">Image URL (optional)</label>
+          <input
+            id="imageUrl"
+            type="text"
+            placeholder="e.g. bondpaper.jpg or https://…"
+          />
+
+          <label for="campus">Campus</label>
+          <input id="campus" type="text" placeholder="ADMU" value="ADMU" />
+
+          <label for="category">Category</label>
+          <input id="category" type="text" placeholder="Supplies" />
+
+          <label for="notes">Notes (optional)</label>
+          <textarea
+            id="notes"
+            rows="2"
+            placeholder="Condition, meetup instructions, etc."
+          ></textarea>
+
+          <div id="msgAdd" class="message error"></div>
+          <button id="btnAdd">Post listing</button>
+        </div>
+
+        <div class="card">
+          <h2>My listings</h2>
+          <div class="small" style="margin-bottom: 6px">
+            Items you’ve posted as a seller.
+          </div>
+          <div id="listings"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>My sales / confirmed orders</h2>
+        <p class="small">
+          Orders that include your products. Use the buyer’s phone number to
+          coordinate payment and meetup.
+        </p>
+        <div id="sales"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8000";
+
+      function getAuthToken() {
+        return localStorage.getItem("authToken");
+      }
+
+      function requireLogin() {
+        const token = getAuthToken();
+        if (!token) {
+          alert("Please log in to access the seller dashboard.");
+          window.location.href = "login.html";
+          return null;
+        }
+        return token;
+      }
+
+      function peso(n) {
+        n = Number(n) || 0;
+        return "₱" + n.toFixed(0);
+      }
+
+      function showMessage(id, text, isError = true) {
+        const el = document.getElementById(id);
+        el.textContent = text;
+        el.className = "message " + (isError ? "error" : "ok");
+        el.style.display = "block";
+      }
+
+      // --- Logout link ---
+      document.getElementById("logoutLink").addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("authUser");
+        window.location.href = "login.html";
+      });
+
+      // --- Add listing ---
+      document.getElementById("btnAdd").addEventListener("click", async () => {
+        const token = requireLogin();
+        if (!token) return;
+
+        const name = document.getElementById("name").value.trim();
+        const price = document.getElementById("price").value;
+        const imageUrl = document.getElementById("imageUrl").value.trim();
+        const campus = document.getElementById("campus").value.trim();
+        const category = document.getElementById("category").value.trim();
+
+        if (!name || !price) {
+          showMessage("msgAdd", "Item name and price are required.");
+          return;
+        }
+
+        const btn = document.getElementById("btnAdd");
+        btn.disabled = true;
+        showMessage("msgAdd", "Posting listing…", false);
+
+        try {
+          const resp = await fetch(`${API_BASE}/api/my/products`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              name,
+              price: Number(price),
+              imageUrl,
+              campus,
+              category,
+            }),
+          });
+
+          const data = await resp.json();
+          if (!resp.ok) {
+            throw new Error(data.error || "Failed to create listing");
+          }
+
+          showMessage("msgAdd", "Listing posted!", false);
+
+          // clear important fields
+          document.getElementById("name").value = "";
+          document.getElementById("price").value = "";
+          document.getElementById("imageUrl").value = "";
+          document.getElementById("category").value = "";
+          document.getElementById("notes").value = "";
+
+          await loadListings();
+        } catch (e) {
+          console.error(e);
+          showMessage("msgAdd", e.message || "Failed to create listing.");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      // --- Load my listings ---
+      async function loadListings() {
+        const token = requireLogin();
+        if (!token) return;
+
+        const container = document.getElementById("listings");
+        container.innerHTML = '<p class="small">Loading…</p>';
+
+        try {
+          const resp = await fetch(`${API_BASE}/api/my/products`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.error || "Failed to load listings");
+
+          const products = data.products || [];
+          if (!products.length) {
+            container.innerHTML =
+              '<p class="small">You have no listings yet.</p>';
+            return;
+          }
+
+          const rows = products
+            .map(
+              (p) => `
+            <tr>
+              <td>${p.name}</td>
+              <td>${peso(p.price)}</td>
+              <td>${p.campus || "-"}</td>
+              <td>${p.category || "-"}</td>
+              <td>
+                <button class="small danger" data-id="${p.id}">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          `
+            )
+            .join("");
+
+          container.innerHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Price</th>
+                  <th>Campus</th>
+                  <th>Category</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          `;
+
+          // hook delete buttons
+          container.querySelectorAll("button[data-id]").forEach((btn) => {
+            btn.addEventListener("click", () => deleteListing(btn.dataset.id));
+          });
+        } catch (e) {
+          console.error(e);
+          container.innerHTML =
+            '<p class="small">Could not load listings.</p>';
+        }
+      }
+
+      async function deleteListing(id) {
+        const token = requireLogin();
+        if (!token) return;
+        if (!confirm("Delete this listing?")) return;
+
+        try {
+          const resp = await fetch(`${API_BASE}/api/my/products/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.error || "Failed to delete");
+
+          await loadListings();
+        } catch (e) {
+          alert(e.message || "Failed to delete listing.");
+        }
+      }
+
+      // --- Load my sales ---
+      async function loadSales() {
+        const token = requireLogin();
+        if (!token) return;
+
+        const container = document.getElementById("sales");
+        container.innerHTML = '<p class="small">Loading…</p>';
+
+        try {
+          const resp = await fetch(`${API_BASE}/api/my/sales`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.error || "Failed to load sales");
+
+          const orders = data.orders || [];
+          if (!orders.length) {
+            container.innerHTML =
+              '<p class="small">No orders for your items yet.</p>';
+            return;
+          }
+
+          const rows = orders
+            .map((o) => {
+              const items = (o.items || [])
+                .map((it) => `${it.qty}× ${it.productId}`)
+                .join(", ");
+
+              return `
+            <tr>
+              <td>${o.id}</td>
+              <td>${items || "<em>No items</em>"}</td>
+              <td>${peso(o.total)}</td>
+              <td>${o.buyerPhone || "-"}</td>
+              <td class="small">
+                ${new Date(o.createdAt).toLocaleString("en-PH", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </td>
+            </tr>
+          `;
+            })
+            .join("");
+
+          container.innerHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Buyer phone</th>
+                  <th>When</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          `;
+        } catch (e) {
+          console.error(e);
+          container.innerHTML =
+            '<p class="small">Could not load sales data.</p>';
+        }
+      }
+
+      // --- init ---
+      (function init() {
+        if (!requireLogin()) return;
+        loadListings();
+        loadSales();
+      })();
+    </script>
+  </body>
+</html>

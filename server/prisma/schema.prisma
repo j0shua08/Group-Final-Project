@@ -14,6 +14,17 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  products Product[]        // listings this user is selling
+  orders   Order[]  @relation("BuyerOrders") // orders this user placed
+}
+
 model Product {
   id        String   @id @default(cuid())
   name      String
@@ -22,15 +33,27 @@ model Product {
   category  String
   imageUrl  String?
   createdAt DateTime @default(now())
+  seller   User?    @relation(fields: [sellerId], references: [id])
+  sellerId String?
+
+  items    OrderItem[]
 }
 
 model Order {
-  id        String     @id @default(cuid())
-  campus    String
-  pickup    String
-  total     Int
-  createdAt DateTime   @default(now())
-  items     OrderItem[]
+  id         String     @id @default(cuid())
+  campus     String
+  pickup     String
+  total      Int
+  couponCode String?
+  discount   Int?
+  buyerPhone String?     // we'll require this at checkout later
+
+  createdAt  DateTime   @default(now())
+
+  buyer   User?    @relation("BuyerOrders", fields: [buyerId], references: [id])
+  buyerId String?
+
+  items   OrderItem[]
 }
 
 model OrderItem {
@@ -39,7 +62,9 @@ model OrderItem {
   productId String
   qty       Int
   price     Int     // snapshot at order time
-  Order     Order   @relation(fields: [orderId], references: [id])
+
+  Order   Order   @relation(fields: [orderId], references: [id])
+  Product Product @relation(fields: [productId], references: [id])
 }
 
 

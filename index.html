@@ -74,9 +74,12 @@
     <nav class="nav" aria-label="Primary">
       <a href="index.html" aria-current="page">Home</a>
       <a href="listings.html">Shop</a>
+      <a href="my-orders.html">My Orders</a>
+      <a href="seller-dashboard.html">Sell</a>
       <a class="cart-link" href="cart.html" aria-label="Cart">
         Cart <span id="cartBadge" class="badge" style="display:none">0</span>
       </a>
+      <a href="#" id="logoutLink">Logout</a>
       <select id="campusSelect" class="campus-select" aria-label="Select campus">
         <option value="ADMU" selected>Ateneo (ADMU)</option>
         <option value="UPD">UP Diliman (UPD)</option>
@@ -185,7 +188,7 @@
       try {
         const raw = localStorage.getItem('cart') || '[]';
         const items = JSON.parse(raw);
-        const qty = Array.isArray(items) ? items.reduce((n, i) => n + (i.quantity || 1), 0) : 0;
+        const qty = Array.isArray(items) ? items.reduce((n, i) => n + (i.qty || 1), 0) : 0;
         const badge = document.getElementById('cartBadge');
         if (qty > 0) {
           badge.textContent = qty;
@@ -197,6 +200,17 @@
     }
     updateCartBadge();
     window.addEventListener('storage', updateCartBadge);
-  </script>
+</script>
+<script>
+  const logoutBtn = document.getElementById("logoutLink");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authUser");
+      window.location.href = "login.html";
+    });
+  }
+</script>
 </body>
 </html>

@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Admin Analytics • UniThrift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: #f3f4f6;
+        margin: 0;
+        padding: 24px 16px 40px;
+      }
+      .shell {
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+      .top-links {
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+      }
+      .top-links a {
+        color: #4f46e5;
+        text-decoration: none;
+        margin-right: 12px;
+      }
+      h1 {
+        margin: 0 0 4px;
+      }
+      .muted {
+        margin: 0 0 16px;
+        color: #6b7280;
+        font-size: 0.9rem;
+      }
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        border-radius: 999px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        padding: 4px 6px;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+      }
+      select {
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        padding: 4px 10px;
+        font-size: 0.82rem;
+        background: white;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      @media (max-width: 900px) {
+        .grid-4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 600px) {
+        .grid-4 {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 14px 16px 16px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e5e7eb;
+      }
+      .card-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        margin-bottom: 4px;
+      }
+      .card-value {
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+      .card-sub {
+        font-size: 0.75rem;
+        color: #6b7280;
+      }
+      .charts {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      @media (max-width: 900px) {
+        .charts {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .chart-container {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 12px 16px 16px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e5e7eb;
+      }
+      .chart-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .chart-sub {
+        font-size: 0.78rem;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+      th,
+      td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+      }
+      th {
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        color: #6b7280;
+      }
+      .small {
+        font-size: 0.78rem;
+        color: #6b7280;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 0.7rem;
+      }
+      .danger {
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="top-links">
+        <a href="index.html">← Back to shop</a>
+        <a href="seller-dashboard.html">Seller dashboard</a>
+      </div>
+
+      <h1>Admin Analytics</h1>
+      <p class="muted">
+        Internal view of UniThrift performance. Requires admin key
+        (<code>ADMIN_KEY</code>) in query string.
+      </p>
+
+      <div class="controls">
+        <div class="pill">
+          Range&nbsp;
+          <select id="range">
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
+        <div class="small">
+          Admin key used:
+          <code id="adminKeyLabel"></code>
+          &nbsp;|&nbsp;
+          <span id="dateRangeLabel"></span>
+        </div>
+      </div>
+
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-title">Total Sales</div>
+          <div class="card-value" id="totSales">₱0</div>
+          <div class="card-sub small" id="totSalesSub">
+            Sum of paid orders in range.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total Orders</div>
+          <div class="card-value" id="totOrders">0</div>
+          <div class="card-sub small">Number of orders placed.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg Order Value</div>
+          <div class="card-value" id="avgOrder">₱0</div>
+          <div class="card-sub small">Total sales / total orders.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Discount Given</div>
+          <div class="card-value" id="totDiscount">₱0</div>
+          <div class="card-sub small">
+            Sum of coupon discounts applied.
+          </div>
+        </div>
+      </div>
+
+      <div class="charts">
+        <div class="chart-container">
+          <div class="chart-title">Daily sales trend</div>
+          <div class="chart-sub">
+            Shows how revenue is distributed by day in the selected range.
+          </div>
+          <canvas id="dailyChart" height="140"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Sales by campus</div>
+          <div class="chart-sub">
+            Compares order volume and revenue across campuses.
+          </div>
+          <canvas id="campusChart" height="140"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-container" style="margin-bottom: 16px">
+        <div class="chart-title">Coupon usage</div>
+        <div class="chart-sub">
+          How often discount codes are used and how much discount they generated.
+        </div>
+        <canvas id="couponChart" height="120"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="chart-title">Recent orders</div>
+        <p class="chart-sub">
+          Latest orders (up to 50). Good for manually checking test runs and
+          demo transactions.
+        </p>
+        <div id="ordersTable"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8000";
+
+      const params = new URLSearchParams(location.search);
+      // You can override this per environment; default is your dev ADMIN_KEY
+      const ADMIN_KEY = params.get("key") || "dev-admin-key";
+
+      document.getElementById("adminKeyLabel").textContent = ADMIN_KEY;
+
+      const rangeSelect = document.getElementById("range");
+      const dateRangeLabel = document.getElementById("dateRangeLabel");
+
+      const totSalesEl = document.getElementById("totSales");
+      const totOrdersEl = document.getElementById("totOrders");
+      const avgOrderEl = document.getElementById("avgOrder");
+      const totDiscountEl = document.getElementById("totDiscount");
+      const totSalesSubEl = document.getElementById("totSalesSub");
+
+      let dailyChart;
+      let campusChart;
+      let couponChart;
+
+      function formatPeso(n) {
+        n = Number(n) || 0;
+        return "₱" + n.toLocaleString("en-PH", { maximumFractionDigits: 0 });
+      }
+
+      function formatDateLabel(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        return d.toLocaleDateString("en-PH", {
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      async function loadSummary() {
+        const range = rangeSelect.value;
+        try {
+          const resp = await fetch(
+            `${API_BASE}/api/admin/summary?range=${encodeURIComponent(
+              range
+            )}&key=${encodeURIComponent(ADMIN_KEY)}`
+          );
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.error || "Failed to load summary");
+
+          // set header info
+          if (data.from && data.to) {
+            const fromLabel = formatDateLabel(data.from);
+            const toLabel = formatDateLabel(data.to);
+            dateRangeLabel.textContent = `${fromLabel} → ${toLabel}`;
+          }
+
+          // totals
+          const totals = data.totals || {};
+          totSalesEl.textContent = formatPeso(totals.sales || 0);
+          totOrdersEl.textContent = (totals.orders || 0).toString();
+          avgOrderEl.textContent = formatPeso(totals.avgOrder || 0);
+          totDiscountEl.textContent = formatPeso(totals.discount || 0);
+
+          totSalesSubEl.textContent =
+            totals.orders > 0
+              ? `Avg order value: ${formatPeso(totals.avgOrder || 0)}`
+              : "No orders in this range.";
+
+          // charts
+          updateDailyChart(data.daily || []);
+          updateCampusChart(data.byCampus || []);
+          updateCouponChart(data.byCoupon || []);
+        } catch (e) {
+          console.error(e);
+          alert("Failed to load admin summary: " + (e.message || e));
+        }
+      }
+
+      async function loadRecentOrders() {
+        try {
+          const resp = await fetch(
+            `${API_BASE}/api/admin/orders?limit=50&key=${encodeURIComponent(
+              ADMIN_KEY
+            )}`
+          );
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.error || "Failed to load orders");
+          renderOrdersTable(data.orders || []);
+        } catch (e) {
+          console.error(e);
+          document.getElementById("ordersTable").innerHTML =
+            '<p class="small danger">Failed to load recent orders.</p>';
+        }
+      }
+
+      function updateDailyChart(daily) {
+        const labels = daily.map((d) => d.date);
+        const salesData = daily.map((d) => d.sales || 0);
+        const ordersData = daily.map((d) => d.orders || 0);
+
+        const ctx = document.getElementById("dailyChart").getContext("2d");
+        if (dailyChart) {
+          dailyChart.data.labels = labels;
+          dailyChart.data.datasets[0].data = salesData;
+          dailyChart.data.datasets[1].data = ordersData;
+          dailyChart.update();
+          return;
+        }
+
+        dailyChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Sales (₱)",
+                data: salesData,
+                yAxisID: "y",
+                tension: 0.3,
+              },
+              {
+                label: "Orders",
+                data: ordersData,
+                yAxisID: "y1",
+                borderDash: [4, 4],
+                tension: 0.3,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            interaction: {
+              mode: "index",
+              intersect: false,
+            },
+            stacked: false,
+            scales: {
+              y: {
+                type: "linear",
+                display: true,
+                position: "left",
+              },
+              y1: {
+                type: "linear",
+                display: true,
+                position: "right",
+                grid: {
+                  drawOnChartArea: false,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateCampusChart(byCampus) {
+        const labels = byCampus.map((c) => c.campus || "Unknown");
+        const sales = byCampus.map((c) => c.sales || 0);
+        const orders = byCampus.map((c) => c.orders || 0);
+
+        const ctx = document.getElementById("campusChart").getContext("2d");
+        if (campusChart) {
+          campusChart.data.labels = labels;
+          campusChart.data.datasets[0].data = sales;
+          campusChart.data.datasets[1].data = orders;
+          campusChart.update();
+          return;
+        }
+
+        campusChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Sales (₱)",
+                data: sales,
+              },
+              {
+                label: "Orders",
+                data: orders,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                stacked: false,
+              },
+              y: {
+                stacked: false,
+              },
+            },
+          },
+        });
+      }
+
+      function updateCouponChart(byCoupon) {
+        const labels = byCoupon.map((c) => c.code);
+        const uses = byCoupon.map((c) => c.uses || 0);
+        const discount = byCoupon.map((c) => c.totalDiscount || 0);
+
+        const ctx = document.getElementById("couponChart").getContext("2d");
+        if (couponChart) {
+          couponChart.data.labels = labels;
+          couponChart.data.datasets[0].data = uses;
+          couponChart.data.datasets[1].data = discount;
+          couponChart.update();
+          return;
+        }
+
+        couponChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Uses",
+                data: uses,
+              },
+              {
+                label: "Total discount (₱)",
+                data: discount,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            indexAxis: "y",
+          },
+        });
+      }
+
+      function renderOrdersTable(orders) {
+        const container = document.getElementById("ordersTable");
+        if (!orders.length) {
+          container.innerHTML =
+            '<p class="small">No orders yet. Run a few test checkouts.</p>';
+          return;
+        }
+
+        const rows = orders
+          .map((o) => {
+            const itemSummary = (o.items || [])
+              .map((it) => `${it.qty}× ${it.productId}`)
+              .join(", ");
+            const when = new Date(o.createdAt).toLocaleString("en-PH", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            return `
+          <tr>
+            <td>${o.id}</td>
+            <td>${itemSummary || "<em>No items</em>"}</td>
+            <td>${formatPeso(o.total || 0)}</td>
+            <td>${o.buyerPhone || "-"}</td>
+            <td>${o.campus || "-"}</td>
+            <td class="small">${when}</td>
+          </tr>
+        `;
+          })
+          .join("");
+
+        container.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Phone</th>
+                <th>Campus</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+      }
+
+      // hook range selector
+      rangeSelect.addEventListener("change", () => {
+        loadSummary();
+      });
+
+      // init
+      (function init() {
+        loadSummary();
+        loadRecentOrders();
+      })();
+    </script>
+  </body>
+</html>

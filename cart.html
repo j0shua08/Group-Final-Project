@@ -28,21 +28,39 @@
     <a href="checkout.html" class="btn">Checkout</a>
   </main>
   <script>
-    function peso(n){ return `₱${n.toFixed(0)}` }
-    function load(){
-      const list = document.getElementById("list");
+    function peso(n) {
+      return `₱${n.toFixed(0)}`;
+    }
+  
+    function load() {
       const raw = localStorage.getItem("cart") || "[]";
-      const cart = JSON.parse(raw);
+      let cart = [];
+  
+      try {
+        cart = JSON.parse(raw);
+      } catch {
+        cart = [];
+      }
+  
+      const listEl = document.getElementById("list");
       let total = 0;
-      list.innerHTML = cart.map(i=>{
-        total += i.price * i.quantity;
-        return `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0">
-          <div>${i.name} × ${i.quantity}</div>
-          <div>${peso(i.price * i.quantity)}</div>
-        </div>`;
-      }).join("") || "<p>Your cart is empty.</p>";
+  
+      const html = cart.map(i => {
+        const qty = i.qty || 1;
+        const lineTotal = (i.price || 0) * qty;
+        total += lineTotal;
+        return `
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0">
+            <div>${i.name} × ${qty}</div>
+            <div>${peso(lineTotal)}</div>
+          </div>
+        `;
+      }).join("");
+  
+      listEl.innerHTML = html || "<p>Your cart is empty.</p>";
       document.getElementById("total").textContent = `Total: ${peso(total)}`;
     }
+  
     load();
   </script>
 </body></html>
